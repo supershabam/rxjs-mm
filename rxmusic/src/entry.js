@@ -1,5 +1,5 @@
-import keymovements from './keymovements'
-import midikeyboard from './midikeyboard'
+import keymovements from './keymovements-hot'
+import midikeyboard from './offsettingKeyboard'
 import Tone from 'tone'
 
 var synth = new Tone.PolySynth()

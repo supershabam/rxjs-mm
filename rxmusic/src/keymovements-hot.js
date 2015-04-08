@@ -31,5 +31,5 @@ export default function keymovements(el) {
   return rx.Observable.merge(
     latchedKeydowns.map(toMovement('down')),
     unlatchingKeyups.map(toMovement('up'))
-  ).publish().refCount() // turns this into a multicast observable
+  ).publish().refCount()
 }

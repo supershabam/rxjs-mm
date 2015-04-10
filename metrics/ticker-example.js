@@ -12,6 +12,10 @@ var fn = function() {
   })
 }
 
-ticker(200, 1000, fn).subscribe(function(x) {
+let sub = ticker(200, 1000, fn).subscribe(function(x) {
   console.log(`result: ${x}`)
 })
+
+setTimeout(function() {
+  sub.dispose()
+}, 5000)

@@ -9,7 +9,7 @@ let rx = require('rx')
 // is scheduled to execute while a previous call is already in-flight, the
 // call is skipped.
 // This returns an observable sequence of the values returned by fn.
-function ticker(splay, period, fn) {
+module.exports = function ticker(splay, period, fn) {
   let delay = Math.random() * splay
   let inFlight = false
 
@@ -31,17 +31,3 @@ function ticker(splay, period, fn) {
         })
     })
 }
-
-var fn = function() {
-  return new Promise(function(resolve) {
-    var timeout = Math.random() * 2000 + 500
-    console.log(`running for ${timeout}`)
-    setTimeout(function() {
-      resolve('done')
-    }, timeout)
-  })
-}
-
-ticker(200, 1000, fn).subscribe(function(x) {
-  console.log(`result: ${x}`)
-})

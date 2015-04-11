@@ -2,7 +2,7 @@
 // 60 = C4
 let baseMIDINote = 60
 // in-order keys
-let keyboard = 'AWSEDFTGYHJIKOL'
+let keyboard = 'AWSEDFTGYHUJKOLP;'
 // keymap turns a keyboard key into a midi note
 let keymap = new Map(
   [].map.call(keyboard, function(c, i) {

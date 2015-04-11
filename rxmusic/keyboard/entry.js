@@ -12,7 +12,9 @@ let kb = midikeyboard(km)
 function frequency(midinote) {
   return 440 * Math.pow(2, (midinote - 69) / 12)
 }
-
+kb.subscribe(function(note) {
+  console.log(note)
+})
 kb.subscribe(function(note) {
   console.log(note)
   if (note.value === 0) {

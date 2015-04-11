@@ -3,13 +3,9 @@
 let http = require('http')
 let rx = require('rx')
 let WebSocketServer = require('websocket').server
+let Synth = require('./synth')
 
-let state = {
-  q: 40,
-  keys: []
-}
-
-let stateSubject = new rx.BehaviorSubject(state)
+let synth = new Synth()
 
 let server = http.createServer(function(req, resp) {
   console.log('normal request')
@@ -26,13 +22,13 @@ let wss = new WebSocketServer({
 })
 
 function handleSynthConn(c) {
-  let subscription = stateSubject.subscribe(
-    function(state) {
-      c.sendUTF(JSON.stringify(state))
+  let sub = synth.observable().subscribe(
+    function(event) {
+      c.sendUTF(JSON.stringify(event))
     }
   )
   c.on('close', function() {
-    subscription.dispose()
+    sub.dispose()
   })
 }
 

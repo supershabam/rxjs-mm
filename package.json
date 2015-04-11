@@ -1,0 +1,32 @@
+{
+  "name": "rxjs-mm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "narp.js",
+  "dependencies": {
+    "node-static": "^0.7.6",
+    "rx": "^2.5.1",
+    "websocket": "^1.0.18",
+    "tone": "^0.4.2"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.13.1",
+    "rx-dom": "^5.0.3",
+    "babel-loader": "^5.0.0",
+    "babel-core": "^5.0.10",
+    "webpack": "^1.8.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/supershabam/rxjs-mm"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/supershabam/rxjs-mm/issues"
+  },
+  "homepage": "https://github.com/supershabam/rxjs-mm"
+}

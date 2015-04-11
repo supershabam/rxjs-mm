@@ -22,6 +22,13 @@ module.exports = class Control {
       })
   }
 
+  state() {
+    return {
+      type: 'button',
+      value: 0
+    }
+  }
+
   reset() {
     this.setValue(this._defaultValue)
   }

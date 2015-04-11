@@ -81,6 +81,15 @@
 	      }));
 	    });
 	  }
+
+	  if (state.type === 'crusher') {
+	    var widget = nx.add('slider');
+	    widget.sendsTo(function (data) {
+	      ws.onNext(JSON.stringify({
+	        value: ~ ~(data.value * 8)
+	      }));
+	    });
+	  }
 	});
 
 	var connection = published.connect() // create the observable

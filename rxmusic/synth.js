@@ -14,7 +14,11 @@ module.exports = class Synth {
       new Control({
         type: 'note',
         start: 0,
-        note: 72
+        note: 50
+      }),
+      new Control({
+        type: 'crusher',
+        start: 8
       })
     ]
     this._available = new Set(this._controls)

@@ -75,6 +75,7 @@
 
 	// audio components
 	var synth = new _Tone2['default'].PolySynth();
+	var crusher = new _Tone2['default'].BitCrusher(4);
 	var feedbackDelay = new _Tone2['default'].PingPongDelay({
 	  delayTime: '8n',
 	  feedback: 0.6,
@@ -82,7 +83,8 @@
 	});
 
 	// wiring
-	synth.connect(feedbackDelay);
+	synth.connect(crusher);
+	crusher.connect(feedbackDelay);
 	feedbackDelay.toMaster();
 
 	var ws = _rxdom2['default'].DOM.fromWebSocket(wsURL());
@@ -101,6 +103,13 @@
 	  } else {
 	    synth.triggerAttack(frequency(msg.config.note));
 	  }
+	});
+
+	// handle crusher
+	msgs.filter(function (msg) {
+	  return msg && msg.config && msg.config.type === 'crusher';
+	}).subscribe(function (msg) {
+	  crusher.set({ bits: msg.value });
 	});
 
 	var connection = p.connect(); // create the observable

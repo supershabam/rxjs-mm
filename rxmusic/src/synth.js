@@ -18,6 +18,7 @@ function frequency(midinote) {
 
 // audio components
 let synth = new Tone.PolySynth()
+let crusher = new Tone.BitCrusher(4)
 let feedbackDelay = new Tone.PingPongDelay({
   "delayTime" : "8n",
   "feedback" : 0.6,
@@ -25,7 +26,8 @@ let feedbackDelay = new Tone.PingPongDelay({
 })
 
 // wiring
-synth.connect(feedbackDelay)
+synth.connect(crusher)
+crusher.connect(feedbackDelay)
 feedbackDelay.toMaster()
 
 let ws = rxdom.DOM.fromWebSocket(wsURL())
@@ -44,6 +46,13 @@ msgs.filter(function(msg) {
   } else {
     synth.triggerAttack(frequency(msg.config.note))
   }
+})
+
+// handle crusher
+msgs.filter(function(msg) {
+  return msg && msg.config && msg.config.type === 'crusher'
+}).subscribe(function(msg) {
+  crusher.set({bits: msg.value})
 })
 
 let connection = p.connect() // create the observable

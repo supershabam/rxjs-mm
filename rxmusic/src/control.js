@@ -17,7 +17,8 @@ let published = ws.publish() // single hot observable
 published.take(1).map(function(m) {
   return JSON.parse(m.data)
 }).subscribe(function(state) {
-  if (state.type === 'button') {
+  // buttons send a {value: Integer} event where value is 0 or 1
+  if (state.type === 'note') {
     let widget = nx.add('button')
     widget.sendsTo(function(data) {
       ws.onNext(JSON.stringify({

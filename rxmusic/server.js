@@ -39,7 +39,7 @@ function handleSynthConn(c) {
 function handleControlConn(c) {
   // TODO let [control, release] = synth.acquire()
   let control = synth.acquire()
-  c.sendUTF(JSON.stringify(control.state()))
+  c.sendUTF(JSON.stringify(control.config()))
   c.on('message', function(m) {
     if (m.type === 'utf8') {
       let data = JSON.parse(m.utf8Data)

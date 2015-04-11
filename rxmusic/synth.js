@@ -6,13 +6,22 @@ let Control = require('./control')
 module.exports = class Synth {
   constructor() {
     this._controls = [
-      new Control('c4', 'middle c', 0)
+      new Control({
+        type: 'note',
+        start: 0,
+        note: 60
+      }),
+      new Control({
+        type: 'note',
+        start: 0,
+        note: 72
+      })
     ]
     this._available = new Set(this._controls)
   }
 
   acquire() {
-    return this._controls[0]
+    return this._controls[~~(Math.random() * this._controls.length)]
   }
 
   release(control) {

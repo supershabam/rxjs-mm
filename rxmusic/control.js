@@ -1,36 +1,30 @@
 'use strict'
 
 let rx = require('rx')
+let extend = require('util')._extend
 
 module.exports = class Control {
-  constructor(id, name, defaultValue) {
-    this._id = id
-    this._name = name
-    this._defaultValue = defaultValue
-    this._subject = new rx.BehaviorSubject(this._defaultValue)
+  constructor(config) {
+    this._config = config
+    this._subject = new rx.BehaviorSubject(this._config.start)
+  }
+
+  config() {
+    return this._config
   }
 
   observable() {
     let self = this
-    return this._subject.asObservable().
-      map(function(x) {
-        return {
-          id: self._id,
-          name: self._name,
-          value: x
-        }
-      })
-  }
-
-  state() {
-    return {
-      type: 'button',
-      value: 0
-    }
+    return this._subject.map(function(value) {
+      return {
+        value: value,
+        config: self._config
+      }
+    })
   }
 
   reset() {
-    this.setValue(this._defaultValue)
+    this.setValue(this._config.start)
   }
 
   setValue(value) {

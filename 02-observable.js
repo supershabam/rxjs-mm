@@ -10,6 +10,11 @@ let observable = rx.Observable.create(function(observer) {
   setTimeout(function() {
     observer.onCompleted()
   }, 2000)
+
+  return function() {
+    // do cleanup if needed
+    console.log('cleanup observable')
+  }
 })
 
 let observer = rx.Observer.create(

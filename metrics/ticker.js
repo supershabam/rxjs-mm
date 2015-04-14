@@ -15,7 +15,7 @@ module.exports = function ticker(splay, period, fn) {
 
   return rx.Observable.timer(delay, period).
     do(function() {
-      console.log('tick')
+      // console.log('tick')
     }).
     filter(function() {
       return !inFlight
@@ -24,7 +24,7 @@ module.exports = function ticker(splay, period, fn) {
       inFlight = true
     }).
     flatMap(function() {
-      console.log('calling fn')
+      // console.log('calling fn')
       return rx.Observable.fromPromise(fn()).
         do(function() {
           inFlight = false

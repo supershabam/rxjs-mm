@@ -60,31 +60,41 @@ module.exports = class Synth {
         row: 1,
         col: 4,
         start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'snare',
+        row: 1,
+        col: 4,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'hh',
+        row: 1,
+        col: 4,
+        start: []
       })
-      // new Control({
-      //   type: 'matrix',
-      //   name: 'snare',
-      //   row: 1,
-      //   col: 4,
-      //   start: []
-      // }),
-      // new Control({
-      //   type: 'matrix',
-      //   name: 'hh',
-      //   row: 1,
-      //   col: 4,
-      //   start: []
-      // })
     ]
-    this._available = new Set(this._controls)
+    // quick hack to make it so ony one person can have a control
+    this._available = []
+    let self = this
+    this._controls.forEach(function(control) {
+      self._available.push(control)
+    })
   }
 
   acquire() {
-    return this._controls[~~(Math.random() * this._controls.length)]
+    if (!this._available.length) {
+      return null
+    }
+    let index = ~~(Math.random() * this._available.length)
+    return this._available.splice(index, 1)[0]
   }
 
   release(control) {
     control.reset()
+    this._available.push(control)
   }
 
   observable() {

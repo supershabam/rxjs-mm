@@ -1,0 +1,34 @@
+#!/bin/bash
+
+wget https://iojs.org/dist/v1.7.1/iojs-v1.7.1-linux-x64.tar.xz
+tar -C /usr/local -xf iojs-v1.7.1-linux-x64.tar.xz
+rm iojs-v1.7.1-linux-x64.tar.xz
+ln -s /usr/local/iojs-v1.7.1-linux-x64 /usr/local/iojs
+
+cat > /etc/profile.d/nodejs.sh <<"EOF"
+export PATH="$PATH:/usr/local/iojs/bin"
+EOF
+
+apt-get install -y git
+
+useradd nodejs -m -s /bin/bash
+mkdir -p /opt/rxjs-mm
+git clone https://github.com/supershabam/rxjs-mm.git /opt/rxjs-mm
+chown -R nodejs /opt/rxjs-mm
+
+su - nodejs -c 'cd /opt/rxjs-mm && npm install'
+
+cat > /etc/init/omgbbq.conf <<"EOF"
+start on runlevel [2345]
+stop on runlevel [06]
+
+setuid nodejs
+
+script
+  /usr/local/iojs/bin/node --harmony_classes /opt/rxjs-mm/rxmusic/server.js
+end script
+EOF
+
+iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
+
+start omgbbq

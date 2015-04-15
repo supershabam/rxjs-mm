@@ -1,6 +1,7 @@
 'use strict'
 
 let http    = require('http')
+let util    = require('util')
 let nstatic = require('node-static')
 let rx      = require('rx')
 
@@ -17,7 +18,7 @@ let server = http.createServer(function(req, resp) {
 })
 
 synth.observable().subscribe(function(x) {
-  console.log(x)
+  console.log(util.inspect(x, {depth: null }))
 })
 
 let wss = new WebSocketServer({

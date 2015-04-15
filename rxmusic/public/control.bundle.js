@@ -104,18 +104,14 @@
 	      var widget = nx.add('matrix', {
 	        w: document.body.clientWidth
 	      });
-	      widget.row = 1;
-	      widget.col = 16;
+	      widget.row = state.row;
+	      widget.col = state.col;
 	      widget.init();
-	      widget.matrix = state.start.map(function (i) {
-	        return [i];
-	      });
+	      widget.matrix = state.start;
 	      widget.draw();
 	      widget.sendsTo(function (data) {
 	        ws.onNext(JSON.stringify({
-	          value: widget.matrix.reduce(function (m, v) {
-	            return m.concat([v[0]]);
-	          }, [])
+	          value: widget.matrix
 	        }));
 	      });
 	    })();

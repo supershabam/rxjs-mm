@@ -23,12 +23,9 @@ module.exports = class Synth {
       new Control({
         type: 'matrix',
         name: 'kick',
-        start: [
-          1, 0, 0, 0,
-          1, 0, 0, 0,
-          1, 0, 0, 0,
-          1, 0, 0, 0
-        ]
+        row: 1,
+        col: 4,
+        start: [[1],[0],[0],[0]]
       })
     ]
     this._available = new Set(this._controls)

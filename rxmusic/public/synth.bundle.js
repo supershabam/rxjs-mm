@@ -79,6 +79,12 @@
 	  return msg && msg.config;
 	}).publish(); // single hot observable
 
+	var score = {}; // global mutable we will abuse
+	var rescore = function rescore() {
+	  _Tone2['default'].Transport.clearTimelines();
+	  _Tone2['default'].Note.parseScore(score);
+	};
+
 	// audio components
 	var synth = new _Tone2['default'].PolySynth();
 	var crusher = new _Tone2['default'].BitCrusher(4);
@@ -91,28 +97,26 @@
 	var snare = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3');
 	var hh = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3');
 
-	_Tone2['default'].Buffer.onload = function () {
-	  ws.connect();
-	};
-
 	// wiring
 	synth.connect(crusher);
 	crusher.connect(feedbackDelay);
 	feedbackDelay.toMaster();
-	kick.toMaster();
+	kick.connect(feedbackDelay);
 
-	// score handling
-
+	// wire scored components
 	_Tone2['default'].Note.route('snare', function (time) {
 	  snare.start(time);
 	});
 	_Tone2['default'].Note.route('hh', function (time) {
 	  hh.start(time);
 	});
+	_Tone2['default'].Note.route('kick', function (time) {
+	  kick.start(time);
+	});
 
 	//setup the transport values
 	_Tone2['default'].Transport.loopStart = 0;
-	_Tone2['default'].Transport.loopEnd = '4:0';
+	_Tone2['default'].Transport.loopEnd = '1:0';
 	_Tone2['default'].Transport.loop = true;
 	_Tone2['default'].Transport.bpm.value = 120;
 	_Tone2['default'].Transport.swing = 0.2;
@@ -120,37 +124,33 @@
 	//the transport won't start firing events until it's started
 	_Tone2['default'].Transport.start();
 
-	var score = {
-	  kick: []
-	};
-	var notes = [];
-	function loadScore() {
-	  notes.forEach(function (note) {});
-	  _Tone2['default'].Transport.clearTimelines();
-	  notes = _Tone2['default'].Note.parseScore(score);
-	}
+	////////////////
+	// HANDLE EVENTS
 
-	// handle beat matrix
-	ws.filter(function (msg) {
-	  return msg.config.type === 'matrix';
-	}).subscribe(function (msg) {
-	  score.kick = msg.value.reduce(function (memo, v, i) {
-	    if (v !== 1) {
+	function matrixToScoreline(m) {
+	  return m.reduce(function (memo, v, i) {
+	    if (v[0] !== 1) {
 	      return memo;
 	    }
 	    var measure = ~ ~(i / 4);
 	    var note = i % 4;
 	    return memo.concat(['' + measure + ':' + note]);
 	  }, []);
-	  loadScore();
+	}
+
+	// kicker
+	ws.filter(function (msg) {
+	  return msg.config.type === 'matrix' && msg.config.name === 'kick';
+	}).subscribe(function (msg) {
+	  score.kick = matrixToScoreline(msg.value);
+	  rescore();
 	});
 
-	_Tone2['default'].Note.route('kick', function (time) {
-	  kick.start(time);
-	});
+	// only once tone is ready will we start up the websocket
+	_Tone2['default'].Buffer.onload = function () {
+	  ws.connect();
+	};
 	// start the observable now that Tone is ready
-
-	// note.dispose()
 
 /***/ },
 /* 1 */

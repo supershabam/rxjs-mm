@@ -42,13 +42,13 @@ let kick = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/5
 let snare = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3")
 let hh = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3")
 
-
-
 // wiring
 synth.connect(crusher)
 crusher.connect(feedbackDelay)
 feedbackDelay.toMaster()
 kick.connect(feedbackDelay)
+snare.connect(feedbackDelay)
+hh.connect(feedbackDelay)
 
 // wire scored components
 Tone.Note.route("snare", function(time){
@@ -74,22 +74,27 @@ Tone.Transport.start()
 ////////////////
 // HANDLE EVENTS
 
-function matrixToScoreline(m) {
-  return m.reduce(function(memo, v, i) {
-    if (v[0] !== 1) {
-      return memo
-    }
-    let measure = ~~(i / 4)
-    let note = i % 4
-    return memo.concat([`${measure}:${note}`])
-  }, [])
-}
-
 // kicker
 ws.filter(function(msg) {
-  return msg.config.type === 'matrix' && msg.config.name === 'kick'
+  return msg.config.name === 'kick'
 }).subscribe(function(msg) {
-  score.kick = matrixToScoreline(msg.value)
+  score.kick = msg.value
+  rescore()
+})
+
+// snare
+ws.filter(function(msg) {
+  return msg.config.name === 'snare'
+}).subscribe(function(msg) {
+  score.snare = msg.value
+  rescore()
+})
+
+// hh
+ws.filter(function(msg) {
+  return msg.config.name === 'hh'
+}).subscribe(function(msg) {
+  score.hh = msg.value
   rescore()
 })
 

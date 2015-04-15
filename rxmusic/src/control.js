@@ -22,6 +22,17 @@ function wsURL() {
 let ws = rxdom.DOM.fromWebSocket(wsURL())
 let published = ws.publish() // single hot observable
 
+function matrixToScoreline(m) {
+  return m.reduce(function(memo, v, i) {
+    if (v[0] !== 1) {
+      return memo
+    }
+    let measure = ~~(i / 4)
+    let note = i % 4
+    return memo.concat([`${measure}:${note}`])
+  }, [])
+}
+
 published.take(1).map(function(m) {
   return JSON.parse(m.data)
 }).subscribe(function(state) {
@@ -51,11 +62,10 @@ published.take(1).map(function(m) {
     widget.row = state.row
     widget.col = state.col
     widget.init()
-    widget.matrix = state.start
     widget.draw()
     widget.sendsTo(function(data) {
       ws.onNext(JSON.stringify({
-        value: widget.matrix
+        value: matrixToScoreline(widget.matrix)
       }))
     })
   }

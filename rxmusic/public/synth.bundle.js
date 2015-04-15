@@ -102,6 +102,8 @@
 	crusher.connect(feedbackDelay);
 	feedbackDelay.toMaster();
 	kick.connect(feedbackDelay);
+	snare.connect(feedbackDelay);
+	hh.connect(feedbackDelay);
 
 	// wire scored components
 	_Tone2['default'].Note.route('snare', function (time) {
@@ -127,22 +129,27 @@
 	////////////////
 	// HANDLE EVENTS
 
-	function matrixToScoreline(m) {
-	  return m.reduce(function (memo, v, i) {
-	    if (v[0] !== 1) {
-	      return memo;
-	    }
-	    var measure = ~ ~(i / 4);
-	    var note = i % 4;
-	    return memo.concat(['' + measure + ':' + note]);
-	  }, []);
-	}
-
 	// kicker
 	ws.filter(function (msg) {
-	  return msg.config.type === 'matrix' && msg.config.name === 'kick';
+	  return msg.config.name === 'kick';
 	}).subscribe(function (msg) {
-	  score.kick = matrixToScoreline(msg.value);
+	  score.kick = msg.value;
+	  rescore();
+	});
+
+	// snare
+	ws.filter(function (msg) {
+	  return msg.config.name === 'snare';
+	}).subscribe(function (msg) {
+	  score.snare = msg.value;
+	  rescore();
+	});
+
+	// hh
+	ws.filter(function (msg) {
+	  return msg.config.name === 'hh';
+	}).subscribe(function (msg) {
+	  score.hh = msg.value;
 	  rescore();
 	});
 

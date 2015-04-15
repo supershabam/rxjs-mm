@@ -46,11 +46,11 @@ published.take(1).map(function(m) {
     })
   }
 
-  if (state.type === 'crusher') {
+  if (state.name === 'delayTime' ) {
     let widget = nx.add('slider')
     widget.sendsTo(function(data) {
       ws.onNext(JSON.stringify({
-        value: ~~(data.value * 8)
+        value: data.value
       }))
     })
   }

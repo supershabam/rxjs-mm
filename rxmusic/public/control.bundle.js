@@ -101,11 +101,11 @@
 	    });
 	  }
 
-	  if (state.type === 'crusher') {
+	  if (state.name === 'delayTime') {
 	    var widget = nx.add('slider');
 	    widget.sendsTo(function (data) {
 	      ws.onNext(JSON.stringify({
-	        value: ~ ~(data.value * 8)
+	        value: data.value
 	      }));
 	    });
 	  }

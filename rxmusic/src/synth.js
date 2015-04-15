@@ -24,31 +24,49 @@ let ws = rxdom.DOM.fromWebSocket(wsURL()).
   }).
   publish()    // single hot observable
 
-let score = {} // global mutable we will abuse
+let score      = {}
+  // synth: [["0:0:2", ["E4"]], ["0:0:2", ["G4"]], ["0:0:2", ["F4"]]]
+  // global mutable we will abuse
+let synthNotes = {
+  C4: ["0:0:2", "0:2:4"],
+  E4: ["0:0:2"]
+}
+function synthScoreline() {
+  let scoreline = []
+  Object.keys(synthNotes).forEach(function(note) {
+    synthNotes[note].forEach(function(timing) {
+      scoreline.push([timing, [note]])
+    })
+  })
+  return scoreline
+}
 let rescore = function() {
+  score.synth = synthScoreline()
+  console.log(score)
   Tone.Transport.clearTimelines()
   Tone.Note.parseScore(score)
 }
+rescore()
 
-// audio components
-let synth = new Tone.PolySynth()
-let crusher = new Tone.BitCrusher(4)
+let synth = new Tone.PolySynth(5, Tone.MonoSynth).setPreset("Pianoetta")
+synth.volume.value = -30
+
 let feedbackDelay = new Tone.PingPongDelay({
   "delayTime" : "8n",
   "feedback" : 0.6,
   "wet" : 0.5
 })
+
 let kick = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/kick.mp3")
 let snare = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3")
 let hh = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3")
 
 // wiring
-synth.connect(crusher)
-crusher.connect(feedbackDelay)
-feedbackDelay.toMaster()
 kick.connect(feedbackDelay)
 snare.connect(feedbackDelay)
 hh.connect(feedbackDelay)
+synth.connect(feedbackDelay)
+feedbackDelay.toMaster()
 
 // wire scored components
 Tone.Note.route("snare", function(time){
@@ -59,6 +77,12 @@ Tone.Note.route("hh", function(time){
 })
 Tone.Note.route("kick", function(time){
   kick.start(time)
+})
+Tone.Note.route("synth", function(time, value){
+  var velocity = Math.random() * 0.5 + 0.4;
+  for (var i = 0; i < value.length; i++) {
+    synth.triggerAttackRelease(value[i], "16n", time, velocity);
+  }
 })
 
 //setup the transport values
@@ -96,6 +120,13 @@ ws.filter(function(msg) {
 }).subscribe(function(msg) {
   score.hh = msg.value
   rescore()
+})
+
+// synth
+ws.filter(function(msg) {
+  return msg.config.name === 'synth'
+}).subscribe(function(msg) {
+
 })
 
 // only once tone is ready will we start up the websocket

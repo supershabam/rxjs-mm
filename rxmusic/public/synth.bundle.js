@@ -79,31 +79,49 @@
 	  return msg && msg.config;
 	}).publish(); // single hot observable
 
-	var score = {}; // global mutable we will abuse
+	var score = {};
+	// synth: [["0:0:2", ["E4"]], ["0:0:2", ["G4"]], ["0:0:2", ["F4"]]]
+	// global mutable we will abuse
+	var synthNotes = {
+	  C4: ['0:0:2', '0:2:4'],
+	  E4: ['0:0:2']
+	};
+	function synthScoreline() {
+	  var scoreline = [];
+	  Object.keys(synthNotes).forEach(function (note) {
+	    synthNotes[note].forEach(function (timing) {
+	      scoreline.push([timing, [note]]);
+	    });
+	  });
+	  return scoreline;
+	}
 	var rescore = function rescore() {
+	  score.synth = synthScoreline();
+	  console.log(score);
 	  _Tone2['default'].Transport.clearTimelines();
 	  _Tone2['default'].Note.parseScore(score);
 	};
+	rescore();
 
-	// audio components
-	var synth = new _Tone2['default'].PolySynth();
-	var crusher = new _Tone2['default'].BitCrusher(4);
+	var synth = new _Tone2['default'].PolySynth(5, _Tone2['default'].MonoSynth).setPreset('Pianoetta');
+	synth.volume.value = -30;
+
 	var feedbackDelay = new _Tone2['default'].PingPongDelay({
 	  delayTime: '8n',
 	  feedback: 0.6,
 	  wet: 0.5
 	});
+
 	var kick = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/kick.mp3');
 	var snare = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3');
 	var hh = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3');
 
 	// wiring
-	synth.connect(crusher);
-	crusher.connect(feedbackDelay);
-	feedbackDelay.toMaster();
 	kick.connect(feedbackDelay);
 	snare.connect(feedbackDelay);
 	hh.connect(feedbackDelay);
+	synth.connect(feedbackDelay);
+	feedbackDelay.toMaster();
 
 	// wire scored components
 	_Tone2['default'].Note.route('snare', function (time) {
@@ -114,6 +132,12 @@
 	});
 	_Tone2['default'].Note.route('kick', function (time) {
 	  kick.start(time);
+	});
+	_Tone2['default'].Note.route('synth', function (time, value) {
+	  var velocity = Math.random() * 0.5 + 0.4;
+	  for (var i = 0; i < value.length; i++) {
+	    synth.triggerAttackRelease(value[i], '16n', time, velocity);
+	  }
 	});
 
 	//setup the transport values
@@ -152,6 +176,11 @@
 	  score.hh = msg.value;
 	  rescore();
 	});
+
+	// synth
+	ws.filter(function (msg) {
+	  return msg.config.name === 'synth';
+	}).subscribe(function (msg) {});
 
 	// only once tone is ready will we start up the websocket
 	_Tone2['default'].Buffer.onload = function () {

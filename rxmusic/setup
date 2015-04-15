@@ -23,6 +23,7 @@ start on runlevel [2345]
 stop on runlevel [06]
 
 setuid nodejs
+chdir /opt/rxjs-mm/rxmusic
 
 script
   /usr/local/iojs/bin/node --harmony_classes /opt/rxjs-mm/rxmusic/server.js

@@ -77,14 +77,24 @@
 	var ws = _rxdom2['default'].DOM.fromWebSocket(wsURL());
 	var published = ws.publish(); // single hot observable
 
-	function matrixToScoreline(m) {
+	function synthToScoreline(m) {
 	  return m.reduce(function (memo, v, i) {
 	    if (v[0] !== 1) {
 	      return memo;
 	    }
-	    var measure = ~ ~(i / 4);
+	    var note = ~ ~(i / 4);
+	    var quarter = i % 4;
+	    return memo.concat(['0:' + note + ':' + quarter]);
+	  }, []);
+	}
+
+	function beatToScoreline(m) {
+	  return m.reduce(function (memo, v, i) {
+	    if (v[0] !== 1) {
+	      return memo;
+	    }
 	    var note = i % 4;
-	    return memo.concat(['' + measure + ':' + note]);
+	    return memo.concat(['0:' + note + ':0']);
 	  }, []);
 	}
 
@@ -120,9 +130,15 @@
 	      widget.init();
 	      widget.draw();
 	      widget.sendsTo(function (data) {
-	        ws.onNext(JSON.stringify({
-	          value: matrixToScoreline(widget.matrix)
-	        }));
+	        if (state.name === 'synth') {
+	          ws.onNext(JSON.stringify({
+	            value: synthToScoreline(widget.matrix)
+	          }));
+	        } else {
+	          ws.onNext(JSON.stringify({
+	            value: beatToScoreline(widget.matrix)
+	          }));
+	        }
 	      });
 	    })();
 	  }

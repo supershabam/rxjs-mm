@@ -79,13 +79,8 @@
 	  return msg && msg.config;
 	}).publish(); // single hot observable
 
-	var score = {};
-	// synth: [["0:0:2", ["E4"]], ["0:0:2", ["G4"]], ["0:0:2", ["F4"]]]
-	// global mutable we will abuse
-	var synthNotes = {
-	  C4: ['0:0:2', '0:2:4'],
-	  E4: ['0:0:2']
-	};
+	var score = {}; // global mutable we will abuse
+	var synthNotes = {};
 	function synthScoreline() {
 	  var scoreline = [];
 	  Object.keys(synthNotes).forEach(function (note) {
@@ -97,7 +92,6 @@
 	}
 	var rescore = function rescore() {
 	  score.synth = synthScoreline();
-	  console.log(score);
 	  _Tone2['default'].Transport.clearTimelines();
 	  _Tone2['default'].Note.parseScore(score);
 	};
@@ -180,7 +174,10 @@
 	// synth
 	ws.filter(function (msg) {
 	  return msg.config.name === 'synth';
-	}).subscribe(function (msg) {});
+	}).subscribe(function (msg) {
+	  synthNotes[msg.config.note] = msg.value;
+	  rescore();
+	});
 
 	// only once tone is ready will we start up the websocket
 	_Tone2['default'].Buffer.onload = function () {

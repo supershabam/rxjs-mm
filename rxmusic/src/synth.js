@@ -24,13 +24,8 @@ let ws = rxdom.DOM.fromWebSocket(wsURL()).
   }).
   publish()    // single hot observable
 
-let score      = {}
-  // synth: [["0:0:2", ["E4"]], ["0:0:2", ["G4"]], ["0:0:2", ["F4"]]]
-  // global mutable we will abuse
-let synthNotes = {
-  C4: ["0:0:2", "0:2:4"],
-  E4: ["0:0:2"]
-}
+let score      = {} // global mutable we will abuse
+let synthNotes = {}
 function synthScoreline() {
   let scoreline = []
   Object.keys(synthNotes).forEach(function(note) {
@@ -42,7 +37,6 @@ function synthScoreline() {
 }
 let rescore = function() {
   score.synth = synthScoreline()
-  console.log(score)
   Tone.Transport.clearTimelines()
   Tone.Note.parseScore(score)
 }
@@ -126,7 +120,8 @@ ws.filter(function(msg) {
 ws.filter(function(msg) {
   return msg.config.name === 'synth'
 }).subscribe(function(msg) {
-
+  synthNotes[msg.config.note] = msg.value
+  rescore()
 })
 
 // only once tone is ready will we start up the websocket

@@ -22,14 +22,24 @@ function wsURL() {
 let ws = rxdom.DOM.fromWebSocket(wsURL())
 let published = ws.publish() // single hot observable
 
-function matrixToScoreline(m) {
+function synthToScoreline(m) {
   return m.reduce(function(memo, v, i) {
     if (v[0] !== 1) {
       return memo
     }
-    let measure = ~~(i / 4)
+    let note = ~~(i / 4)
+    let quarter = i % 4
+    return memo.concat([`0:${note}:${quarter}`])
+  }, [])
+}
+
+function beatToScoreline(m) {
+  return m.reduce(function(memo, v, i) {
+    if (v[0] !== 1) {
+      return memo
+    }
     let note = i % 4
-    return memo.concat([`${measure}:${note}`])
+    return memo.concat([`0:${note}:0`])
   }, [])
 }
 
@@ -64,9 +74,15 @@ published.take(1).map(function(m) {
     widget.init()
     widget.draw()
     widget.sendsTo(function(data) {
-      ws.onNext(JSON.stringify({
-        value: matrixToScoreline(widget.matrix)
-      }))
+      if (state.name === 'synth') {
+        ws.onNext(JSON.stringify({
+          value: synthToScoreline(widget.matrix)
+        }))
+      } else {
+        ws.onNext(JSON.stringify({
+          value: beatToScoreline(widget.matrix)
+        }))
+      }
     })
   }
 })

@@ -9,9 +9,49 @@ module.exports = class Synth {
       new Control({
         type: 'matrix',
         name: 'synth',
-        note: 'C4'
+        note: 'G3',
         row: 1,
-        col: 4,
+        col: 16,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'synth',
+        note: 'A4',
+        row: 1,
+        col: 16,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'synth',
+        note: 'C4',
+        row: 1,
+        col: 16,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'synth',
+        note: 'E4',
+        row: 1,
+        col: 16,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'synth',
+        note: 'G4',
+        row: 1,
+        col: 16,
+        start: []
+      }),
+      new Control({
+        type: 'matrix',
+        name: 'synth',
+        note: 'A5',
+        row: 1,
+        col: 16,
         start: []
       }),
       new Control({
@@ -20,21 +60,21 @@ module.exports = class Synth {
         row: 1,
         col: 4,
         start: []
-      }),
-      new Control({
-        type: 'matrix',
-        name: 'snare',
-        row: 1,
-        col: 4,
-        start: []
-      }),
-      new Control({
-        type: 'matrix',
-        name: 'hh',
-        row: 1,
-        col: 4,
-        start: []
       })
+      // new Control({
+      //   type: 'matrix',
+      //   name: 'snare',
+      //   row: 1,
+      //   col: 4,
+      //   start: []
+      // }),
+      // new Control({
+      //   type: 'matrix',
+      //   name: 'hh',
+      //   row: 1,
+      //   col: 4,
+      //   start: []
+      // })
     ]
     this._available = new Set(this._controls)
   }

@@ -6,19 +6,29 @@ let Control = require('./control')
 module.exports = class Synth {
   constructor() {
     this._controls = [
+      // new Control({
+      //   type: 'note',
+      //   start: 0,
+      //   note: 60
+      // }),
+      // new Control({
+      //   type: 'note',
+      //   start: 0,
+      //   note: 50
+      // }),
+      // new Control({
+      //   type: 'crusher',
+      //   start: 8
+      // }),
       new Control({
-        type: 'note',
-        start: 0,
-        note: 60
-      }),
-      new Control({
-        type: 'note',
-        start: 0,
-        note: 50
-      }),
-      new Control({
-        type: 'crusher',
-        start: 8
+        type: 'matrix',
+        name: 'kick',
+        start: [
+          1, 0, 0, 0,
+          1, 0, 0, 0,
+          1, 0, 0, 0,
+          1, 0, 0, 0
+        ]
       })
     ]
     this._available = new Set(this._controls)

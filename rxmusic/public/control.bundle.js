@@ -58,6 +58,14 @@
 
 	var _rx2 = _interopRequireWildcard(_rx);
 
+	function transpose(a) {
+	  return a[0].map(function (col, i) {
+	    return a.map(function (row) {
+	      return row[i];
+	    });
+	  });
+	}
+
 	function wsURL() {
 	  var scheme = 'ws';
 	  if (window.location.protocol === 'https:') {
@@ -89,6 +97,28 @@
 	        value: ~ ~(data.value * 8)
 	      }));
 	    });
+	  }
+
+	  if (state.type === 'matrix') {
+	    (function () {
+	      var widget = nx.add('matrix', {
+	        w: document.body.clientWidth
+	      });
+	      widget.row = 1;
+	      widget.col = 16;
+	      widget.init();
+	      widget.matrix = state.start.map(function (i) {
+	        return [i];
+	      });
+	      widget.draw();
+	      widget.sendsTo(function (data) {
+	        ws.onNext(JSON.stringify({
+	          value: widget.matrix.reduce(function (m, v) {
+	            return m.concat([v[0]]);
+	          }, [])
+	        }));
+	      });
+	    })();
 	  }
 	});
 
@@ -1127,7 +1157,7 @@
 
 	  return Rx;
 	}));
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)(module), (function() { return this; }())))
 
 /***/ },
 /* 2 */
@@ -11381,10 +11411,11 @@
 
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)(module), (function() { return this; }()), __webpack_require__(4)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)(module), (function() { return this; }()), __webpack_require__(5)))
 
 /***/ },
-/* 3 */
+/* 3 */,
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = function(module) {
@@ -11400,7 +11431,7 @@
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// shim for using process in browser

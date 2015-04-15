@@ -10,11 +10,19 @@ function wsURL() {
   return `${scheme}://${window.location.host}/synth`
 }
 
-// f = (2 ^ (m−69)/12) (440 Hz)
-function frequency(midinote) {
-  return 440 * Math.pow(2, (midinote - 69) / 12)
-}
-
+// messages from websocket
+let ws = rxdom.DOM.fromWebSocket(wsURL()).
+  map(function(x) {
+    try {
+      return JSON.parse(x.data)
+    } catch(err) {
+      return {}
+    }
+  }).
+  filter(function(msg) {
+    return msg && msg.config
+  }).
+  publish()    // single hot observable
 
 // audio components
 let synth = new Tone.PolySynth()
@@ -24,38 +32,73 @@ let feedbackDelay = new Tone.PingPongDelay({
   "feedback" : 0.6,
   "wet" : 0.5
 })
+let kick = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/kick.mp3")
+let snare = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3")
+let hh = new Tone.Player("http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3")
+
+Tone.Buffer.onload = function() {
+  ws.connect() // start the observable now that Tone is ready
+}
 
 // wiring
 synth.connect(crusher)
 crusher.connect(feedbackDelay)
 feedbackDelay.toMaster()
+kick.toMaster()
 
-let ws = rxdom.DOM.fromWebSocket(wsURL())
-let p = ws.publish() // single hot observable
+// score handling
 
-let msgs = p.map(function(m) {
-  return JSON.parse(m.data)
+Tone.Note.route("snare", function(time){
+  snare.start(time)
+})
+Tone.Note.route("hh", function(time){
+  hh.start(time)
 })
 
-// handle notes
-msgs.filter(function(msg) {
-  return msg && msg.config && msg.config.type === 'note'
-}).subscribe(function(msg) {
-  if (msg.value === 0) {
-    synth.triggerRelease(frequency(msg.config.note))
-  } else {
-    synth.triggerAttack(frequency(msg.config.note))
-  }
-})
-
-// handle crusher
-msgs.filter(function(msg) {
-  return msg && msg.config && msg.config.type === 'crusher'
-}).subscribe(function(msg) {
-  crusher.set({bits: msg.value})
-})
-
-let connection = p.connect() // create the observable
+//setup the transport values
+Tone.Transport.loopStart = 0;
+Tone.Transport.loopEnd = "4:0";
+Tone.Transport.loop = true;
+Tone.Transport.bpm.value = 120;
+Tone.Transport.swing = 0.2;
 
 //the transport won't start firing events until it's started
 Tone.Transport.start()
+
+let score = {
+  kick: []
+}
+let notes = []
+function loadScore() {
+  notes.forEach(function(note) {
+    // note.dispose()
+  })
+  Tone.Transport.clearTimelines()
+  notes = Tone.Note.parseScore(score)
+}
+
+// handle beat matrix
+ws.filter(function(msg) {
+  return msg.config.type === 'matrix'
+}).subscribe(function(msg) {
+  score.kick = msg.value.reduce(function(memo, v, i) {
+    if (v !== 1) {
+      return memo
+    }
+    let measure = ~~(i / 4)
+    let note = i % 4
+    return memo.concat([`${measure}:${note}`])
+  }, [])
+  loadScore()
+})
+
+  Tone.Note.route("kick", function(time){
+    kick.start(time)
+  })
+
+
+
+
+
+
+

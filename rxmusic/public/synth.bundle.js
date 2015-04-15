@@ -48,7 +48,7 @@
 
 	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
 
-	var _Tone = __webpack_require__(5);
+	var _Tone = __webpack_require__(3);
 
 	var _Tone2 = _interopRequireWildcard(_Tone);
 
@@ -68,10 +68,16 @@
 	  return '' + scheme + '://' + window.location.host + '/synth';
 	}
 
-	// f = (2 ^ (m−69)/12) (440 Hz)
-	function frequency(midinote) {
-	  return 440 * Math.pow(2, (midinote - 69) / 12);
-	}
+	// messages from websocket
+	var ws = _rxdom2['default'].DOM.fromWebSocket(wsURL()).map(function (x) {
+	  try {
+	    return JSON.parse(x.data);
+	  } catch (err) {
+	    return {};
+	  }
+	}).filter(function (msg) {
+	  return msg && msg.config;
+	}).publish(); // single hot observable
 
 	// audio components
 	var synth = new _Tone2['default'].PolySynth();
@@ -81,41 +87,70 @@
 	  feedback: 0.6,
 	  wet: 0.5
 	});
+	var kick = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/kick.mp3');
+	var snare = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/snare.mp3');
+	var hh = new _Tone2['default'].Player('http://tonenotone.github.io/Tone.js/examples/audio/505/hh.mp3');
+
+	_Tone2['default'].Buffer.onload = function () {
+	  ws.connect();
+	};
 
 	// wiring
 	synth.connect(crusher);
 	crusher.connect(feedbackDelay);
 	feedbackDelay.toMaster();
+	kick.toMaster();
 
-	var ws = _rxdom2['default'].DOM.fromWebSocket(wsURL());
-	var p = ws.publish(); // single hot observable
+	// score handling
 
-	var msgs = p.map(function (m) {
-	  return JSON.parse(m.data);
+	_Tone2['default'].Note.route('snare', function (time) {
+	  snare.start(time);
+	});
+	_Tone2['default'].Note.route('hh', function (time) {
+	  hh.start(time);
 	});
 
-	// handle notes
-	msgs.filter(function (msg) {
-	  return msg && msg.config && msg.config.type === 'note';
-	}).subscribe(function (msg) {
-	  if (msg.value === 0) {
-	    synth.triggerRelease(frequency(msg.config.note));
-	  } else {
-	    synth.triggerAttack(frequency(msg.config.note));
-	  }
-	});
-
-	// handle crusher
-	msgs.filter(function (msg) {
-	  return msg && msg.config && msg.config.type === 'crusher';
-	}).subscribe(function (msg) {
-	  crusher.set({ bits: msg.value });
-	});
-
-	var connection = p.connect(); // create the observable
+	//setup the transport values
+	_Tone2['default'].Transport.loopStart = 0;
+	_Tone2['default'].Transport.loopEnd = '4:0';
+	_Tone2['default'].Transport.loop = true;
+	_Tone2['default'].Transport.bpm.value = 120;
+	_Tone2['default'].Transport.swing = 0.2;
 
 	//the transport won't start firing events until it's started
 	_Tone2['default'].Transport.start();
+
+	var score = {
+	  kick: []
+	};
+	var notes = [];
+	function loadScore() {
+	  notes.forEach(function (note) {});
+	  _Tone2['default'].Transport.clearTimelines();
+	  notes = _Tone2['default'].Note.parseScore(score);
+	}
+
+	// handle beat matrix
+	ws.filter(function (msg) {
+	  return msg.config.type === 'matrix';
+	}).subscribe(function (msg) {
+	  score.kick = msg.value.reduce(function (memo, v, i) {
+	    if (v !== 1) {
+	      return memo;
+	    }
+	    var measure = ~ ~(i / 4);
+	    var note = i % 4;
+	    return memo.concat(['' + measure + ':' + note]);
+	  }, []);
+	  loadScore();
+	});
+
+	_Tone2['default'].Note.route('kick', function (time) {
+	  kick.start(time);
+	});
+	// start the observable now that Tone is ready
+
+	// note.dispose()
 
 /***/ },
 /* 1 */
@@ -1149,7 +1184,7 @@
 
 	  return Rx;
 	}));
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)(module), (function() { return this; }())))
 
 /***/ },
 /* 2 */
@@ -11403,118 +11438,10 @@
 
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)(module), (function() { return this; }()), __webpack_require__(4)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)(module), (function() { return this; }()), __webpack_require__(5)))
 
 /***/ },
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-
-	process.nextTick = (function () {
-	    var canSetImmediate = typeof window !== 'undefined'
-	    && window.setImmediate;
-	    var canMutationObserver = typeof window !== 'undefined'
-	    && window.MutationObserver;
-	    var canPost = typeof window !== 'undefined'
-	    && window.postMessage && window.addEventListener
-	    ;
-
-	    if (canSetImmediate) {
-	        return function (f) { return window.setImmediate(f) };
-	    }
-
-	    var queue = [];
-
-	    if (canMutationObserver) {
-	        var hiddenDiv = document.createElement("div");
-	        var observer = new MutationObserver(function () {
-	            var queueList = queue.slice();
-	            queue.length = 0;
-	            queueList.forEach(function (fn) {
-	                fn();
-	            });
-	        });
-
-	        observer.observe(hiddenDiv, { attributes: true });
-
-	        return function nextTick(fn) {
-	            if (!queue.length) {
-	                hiddenDiv.setAttribute('yes', 'no');
-	            }
-	            queue.push(fn);
-	        };
-	    }
-
-	    if (canPost) {
-	        window.addEventListener('message', function (ev) {
-	            var source = ev.source;
-	            if ((source === window || source === null) && ev.data === 'process-tick') {
-	                ev.stopPropagation();
-	                if (queue.length > 0) {
-	                    var fn = queue.shift();
-	                    fn();
-	                }
-	            }
-	        }, true);
-
-	        return function nextTick(fn) {
-	            queue.push(fn);
-	            window.postMessage('process-tick', '*');
-	        };
-	    }
-
-	    return function nextTick(fn) {
-	        setTimeout(fn, 0);
-	    };
-	})();
-
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	// TODO(shtylman)
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-
-
-/***/ },
-/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root) {
@@ -25859,6 +25786,114 @@
 			root.Tone = Tone;
 		}
 	} (this));
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+
+	process.nextTick = (function () {
+	    var canSetImmediate = typeof window !== 'undefined'
+	    && window.setImmediate;
+	    var canMutationObserver = typeof window !== 'undefined'
+	    && window.MutationObserver;
+	    var canPost = typeof window !== 'undefined'
+	    && window.postMessage && window.addEventListener
+	    ;
+
+	    if (canSetImmediate) {
+	        return function (f) { return window.setImmediate(f) };
+	    }
+
+	    var queue = [];
+
+	    if (canMutationObserver) {
+	        var hiddenDiv = document.createElement("div");
+	        var observer = new MutationObserver(function () {
+	            var queueList = queue.slice();
+	            queue.length = 0;
+	            queueList.forEach(function (fn) {
+	                fn();
+	            });
+	        });
+
+	        observer.observe(hiddenDiv, { attributes: true });
+
+	        return function nextTick(fn) {
+	            if (!queue.length) {
+	                hiddenDiv.setAttribute('yes', 'no');
+	            }
+	            queue.push(fn);
+	        };
+	    }
+
+	    if (canPost) {
+	        window.addEventListener('message', function (ev) {
+	            var source = ev.source;
+	            if ((source === window || source === null) && ev.data === 'process-tick') {
+	                ev.stopPropagation();
+	                if (queue.length > 0) {
+	                    var fn = queue.shift();
+	                    fn();
+	                }
+	            }
+	        }, true);
+
+	        return function nextTick(fn) {
+	            queue.push(fn);
+	            window.postMessage('process-tick', '*');
+	        };
+	    }
+
+	    return function nextTick(fn) {
+	        setTimeout(fn, 0);
+	    };
+	})();
+
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	// TODO(shtylman)
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+
 
 /***/ }
 /******/ ])
